@@ -4,21 +4,14 @@
   <title>Ball Tamer Mini</title>
 	<link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
 	<link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
-	
-	<meta property=’og:title’ content='Ball Tamer'/>
-	<meta property=’og:image’ content='https://kaimet.github.io/Ball-Tamer/img/thumbnail.png’/>
-	<meta property=’og:description’ content='game of skill'/>
-	<meta property=’og:url’ content='https://kaimet.github.io/Ball-Tamer/'/>
-	<meta property='og:image:width' content='436' />
-	<meta property='og:image:height' content='436' />
 </head>
 
 <body style="background-image: url('img/bg.jpg')">
 
 <div id="container" style="display: flex; justify-content: center;">
 <canvas id="gameCanvas" width="450" height="450"></canvas>
-<canvas id="progressCanvas" width="40" height="350" style="border:2px solid #ff66ff; margin-right: 20px;"></canvas>
-<canvas id="angCanvas" width="40" height="350" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
+<canvas id="speedCanvas" width="40" height="450" style="border:2px solid #ff66ff; margin-left: 20px; margin-right: 20px;"></canvas>
+<canvas id="angCanvas" width="40" height="450" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
 </div>
 <div id="scoreContainer" style="display: flex; justify-content: center; fontSize = '36px'"></div>
 
@@ -35,13 +28,21 @@ var fpsOut = document.createElement('div');
 document.body.appendChild(fpsOut);
 fpsOut.style.fontSize = '28px';
 
+var debugOut = document.createElement('div');
+document.body.appendChild(debugOut);
+debugOut.style.fontSize = '28px';
+
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = true;
 //ctx.imageSmoothingQuality = 'high';
-var prgCanvas = document.getElementById("progressCanvas");
-var ctxPrg = prgCanvas.getContext("2d");
+var spCanvas = document.getElementById("speedCanvas");
+var ctxPrg = spCanvas.getContext("2d");
 var ctxAng = angCanvas.getContext("2d");
+
+
+
+// ========================================================================
 
 var playerRad = 15;
 var playerMass = 1;
@@ -52,18 +53,18 @@ var tractionOnKeyDown = 0.97;
 var nBalls = 5;
 var ballRad = 40;
 var ballMass = 7;
-var initBallSpeed = 1.5
+var initBallSpeed = 2.3
 //var initBallSpeed = 0.05
 var minSpeed      = 0.04;
 var initAngVel = 0.015;
 //var initAngVel = 0;//0.00015;
 var minAngVel  = 0.0007;
 
-var Score = 120;
+var Score = 125;
 var gameOver = false;
 
 var edge = 41;
-var shrinkingRate = 3.5; //  sec / px
+var shrinkingRate = 3.3; //  sec / px
 
 var ballImage = new Image();
 ballImage.src = "img/ball.png";
@@ -74,6 +75,10 @@ var directionImage = new Image();
 directionImage.src = "img/direction.png";
 var hitImage= new Image();
 hitImage.src = "img/hit.png";
+var hitGreenImage= new Image();
+hitGreenImage.src = "img/hit-green.png";
+var hitRedImage= new Image();
+hitRedImage.src = "img/hit-red.png";
 var backgroundImage = new Image();
 backgroundImage.src = "img/background.jpg";
 var edgeImage = new Image();
@@ -230,8 +235,8 @@ function Ball(x, y, speed, angVel) {
 	
 }
 
-Ball.prototype.addHit = function(angle, j, hitAngle) {
-    this.hits.push({angle: angle, time: 0, j: j, hitAngle: hitAngle});
+Ball.prototype.addHit = function(angle, j, hitAngle, good) {
+    this.hits.push({angle: angle, time: 0, j: j, hitAngle: hitAngle, good: good});
 }
 
 
@@ -308,7 +313,7 @@ Ball.prototype.draw = function() {
     ctx.rotate(Math.PI - hit.hitAngle );
     
     ctx.drawImage(
-        hitImage,
+        hit.good ? hitGreenImage : hitRedImage,
         0,
         -hitSize / 2,
         hitLength,
@@ -384,6 +389,9 @@ function collidesWithBall(player) {
 							continue;
 					}
 					
+					var spBeforeHit = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+					var avBeforeHit = ball.angularVelocity;
+					
 					// calculate impulse scalar
 					var e = 1; // coefficient of restitution (1 for elastic collision)
 					let j = -(1+e)*velAlongNormal;
@@ -433,12 +441,17 @@ function collidesWithBall(player) {
 						var hitAngle = Math.atan2(dy, dx);
 						hitAngle -= ball.angle;
 						
+						// TODO need to check and change that
+						var hitForce = -Math.sqrt(Math.abs(j)*888+233);
+						//var dSp = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy) - spBeforeHit;
+						//dSp *= 100;
+						
 						// calculate angle between direction towards center of ball and player's direction
 						var playerAngle = Math.atan2(player.vy, player.vx);
 						var centerAngle = Math.atan2(-dy, -dx);
 						var hitRotation = playerAngle - centerAngle;
-						
-						ball.addHit(hitAngle, -Math.sqrt(Math.abs(j))*40+5, hitRotation);
+						var good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
+						ball.addHit(hitAngle, hitForce, hitRotation, good);
 					}
 
 					return true;
@@ -481,7 +494,6 @@ function Sound(filename) {
 
 
 
-
 var avrSpeed = 10, avrAngVel = 10;
 
 var filterStrength = 20;
@@ -507,11 +519,6 @@ function update() {
 	frameTime += (thisFrameTime - frameTime) / filterStrength;
 	lastLoop = thisLoop;
 }
-
-
-setInterval(function(){
-		//fpsOut.innerHTML = (1000/frameTime).toFixed(1) + " fps";
-}, 1000);
 
 
 
@@ -546,14 +553,14 @@ function draw() {
 	});
 	
 	// Average Velocity bar
-	ctxPrg.clearRect(0, 0, prgCanvas.width, prgCanvas.height);
+	ctxPrg.clearRect(0, 0, spCanvas.width, spCanvas.height);
 	var k = 0.5
-	scf = prgCanvas.height / Math.pow(initBallSpeed - minSpeed, k);
+	scf = spCanvas.height / Math.pow(initBallSpeed - minSpeed, k);
 	var h = Math.pow(avrSpeed - minSpeed, k) * scf;
-	h = Math.min(h, prgCanvas.height);
+	h = Math.min(h, spCanvas.height);
 	ctxPrg.beginPath();
 	ctxPrg.fillStyle = "#ff66ff";
-	ctxPrg.fillRect(0, prgCanvas.height - h, prgCanvas.width, prgCanvas.height);
+	ctxPrg.fillRect(0, spCanvas.height - h, spCanvas.width, spCanvas.height);
 	
 	// Average Angular Velocity bar
 	ctxAng.clearRect(0, 0, angCanvas.width, angCanvas.height);
@@ -587,6 +594,15 @@ document.onkeydown = document.onkeyup = function(e) {
 			pause = pause ? false : true; 
     }
 };
+
+
+setInterval(function(){
+		//fpsOut.innerHTML = (1000/frameTime).toFixed(1) + " fps";
+}, 1000);
+
+function db(v) {
+	debugOut.innerHTML = v;
+}
 
 </script>
 </body>
