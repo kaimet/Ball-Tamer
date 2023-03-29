@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Ball Tamer</title>
+  <title>Ball Tamer Mini</title>
 	<link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
 	<link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
 </head>
@@ -9,51 +9,19 @@
 <body style="background-image: url('img/bg.jpg')">
 
 <div id="container" style="display: flex; justify-content: center;">
-<canvas id="gameCanvas" width="550" height="550"></canvas>
-
-<canvas id="speedCanvas" width="20" height="550" style="border:2px solid #ff66ff; margin-left: 10px; margin-right: 20px;"></canvas>
-<canvas id="angCanvas" width="20" height="550" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
-
+<canvas id="gameCanvas" width="450" height="450"></canvas>
+<canvas id="speedCanvas" width="40" height="450" style="border:2px solid #ff66ff; margin-left: 20px; margin-right: 20px;"></canvas>
+<canvas id="angCanvas" width="40" height="450" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
 </div>
-<div id="scoreContainer" style="display: flex; justify-content: center; font-size = '36px'"></div>
+<div id="scoreContainer" style="display: flex; justify-content: center; fontSize = '36px'"></div>
+<br><br>
+<a href="index.html" style="font-size: 20px;">newer version</a>
 
-<a href="ball_tamer-mini3.html" style="font-size: 20px;">other version</a>
 
 <!-- <script src="howler.core.js"></script> -->
 <script>
-
-
-// ===================================================
-
-
-const playerRad = 15;
-const playerMass = 1;
-const playerForce = 0.05;
-const traction = 0.992; // on free fly
-const tractionOnKeyDown = 0.97;
-
-const nBalls = 12;
-const ballRad = 40;
-const ballMass = 10;
-const initBallSpeed = 0.6;
-const minSpeed      = 0.07;
-const initAngVel = 0.025;
-const minAngVel  = 0.004;
-
-const shrinkingRate = 0.0045;
-const shrinkingPixPerBall = 5;
-
-
-// ===================================================
-
-var Score = 0; // bounces
-var fast = false;
-var showFPS = false;
-
-document.getElementById('speedCanvas').style.display = 'none';
-document.getElementById('angCanvas').style.display = 'none';
-
 //var scoreElement = document.getElementById('scoreContainer');
+
 var scoreElement = document.createElement('div');
 scoreContainer.appendChild(scoreElement);
 scoreElement.style.fontSize = '36px';
@@ -76,53 +44,62 @@ var ctxPrg = spCanvas.getContext("2d");
 var ctxAng = angCanvas.getContext("2d");
 
 
-var backgroundImage = new Image();
-backgroundImage.src = "img/background.jpg";
-var edgeImage = new Image();
-edgeImage.src = "img/edge.jpg";
+
+// ========================================================================
+
+var playerRad = 15;
+var playerMass = 1;
+var playerForce = 0.05;
+var traction = 0.992; // on free fly
+var tractionOnKeyDown = 0.97;
+
+var nBalls = 5;
+var ballRad = 40;
+var ballMass = 7;
+var initBallSpeed = 2.3
+//var initBallSpeed = 0.05
+var minSpeed      = 0.04;
+var initAngVel = 0.015;
+//var initAngVel = 0;//0.00015;
+var minAngVel  = 0.0007;
+
+var Score = 125;
+var gameOver = false;
+var fast = false;
+
+var edge = 41;
+var shrinkingRate = 3.3; //  sec / px
+
 
 var ballImage = new Image();
 ballImage.src = "img/ball.png";
-var speckMaskImage = new Image();
-speckMaskImage.src = "img/speck-mask.png";
 var playerImage = new Image();
 playerImage.src = "img/player.png";
 var trailImage = playerImage;
 var directionImage = new Image();
 directionImage.src = "img/direction.png";
-var hitImage = new Image();
+var hitImage= new Image();
 hitImage.src = "img/hit.png";
-var hitGreenImage = new Image();
+var hitGreenImage= new Image();
 hitGreenImage.src = "img/hit-green.png";
-var hitRedImage = new Image();
+var hitRedImage= new Image();
 hitRedImage.src = "img/hit-red.png";
-var meteorGreenImage = new Image();
-meteorGreenImage.src = "img/meteor-green.png";
-var meteorRedImage = new Image();
-meteorRedImage.src = "img/meteor-red.png";
-var moveMeterImage = new Image();
-moveMeterImage.src = "img/movemeter.png";
-
+var backgroundImage = new Image();
+backgroundImage.src = "img/background.jpg";
+var edgeImage = new Image();
+edgeImage.src = "img/edge.jpg";
 
 var bounceWallSound = new Sound('sounds/bouncewall.mp3');
 var bounceBallSound = new Sound('sounds/bounceball.mp3');
 //var bounceBallSound = new Howl({src: ['sounds/bounceball.mp3']});
-var ballDisappearSound = new Audio('sounds/balldisappear.mp3');
+
 var gameOverSound = new Audio('sounds/gameover.mp3');
 
 var keys = {};
 var pause = false;
-var gameOver = false;
-var edge = 41;
 
 
 // ===========================================================
-
-
-function clip(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-}
-
 
 function Player(x, y) {
 	this.x = x;
@@ -243,8 +220,6 @@ Player.prototype.draw = function() {
 
 var player = new Player(canvas.width / 2, canvas.height / 2);
 
-
-
 // ==========================================================
 
 
@@ -257,36 +232,18 @@ function Ball(x, y, speed, angVel) {
 	this.vy = Math.sin(angle) * speed;
 	this.mass = ballMass;
 	this.angularVelocity = angVel;
-	//this.momentOfInertia = 2/5 * this.mass * this.radius * this.radius; // moment of inertia for a solid sphere
-	this.momentOfInertia = 0.04 * this.mass * this.radius * this.radius;
+	this.momentOfInertia = 2/5 * this.mass * this.radius * this.radius; // moment of inertia for a solid sphere
+	//this.momentOfInertia = this.mass * this.radius * this.radius;
 	this.angle = 0; // initial angle of rotation
-	
 	this.hits = [];
-	this.hitDuration = 555;
+	this.hitDuration = 999;
 	
-	this.meteorAngle = 0; // initial angle of meteor
-	this.meteorSpeedFactor = 5; // speed factor of meteor
-	
-	this.moveMeter = {
-		x: 0, y: 0,
-		goalx: 0, goaly: 0
-	};
-	this.moveMeter2 = {
-		x: 0, y: 0,
-		goalx: 0, goaly: 0
-	};
-
 }
-
-Ball.prototype.sp = function() {
-    return Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-}
-
-
 
 Ball.prototype.addHit = function(angle, j, hitAngle, good) {
     this.hits.push({angle: angle, time: 0, j: j, hitAngle: hitAngle, good: good});
 }
+
 
 Ball.prototype.updateHits = function() {
 	for (var i = this.hits.length - 1; i >= 0; i--) {
@@ -296,121 +253,19 @@ Ball.prototype.updateHits = function() {
 			}
 	}
 }
-
-Ball.prototype.drawHits = function() {
-	for (var i = 0; i < this.hits.length; i++) {
-		var hit = this.hits[i];
-		var hitOpacity = 1 - hit.time / this.hitDuration;
-		ctx.save();
-		ctx.rotate(hit.angle);
-		ctx.globalAlpha = hitOpacity;
-		
-		 // draw line representing direction and amount of impact
-		var hitSize = this.radius / 4;
-		var hitLength = hit.j;
-		
-		ctx.translate(this.radius,
-									-hitSize / 2);
-		
-		ctx.rotate(Math.PI - hit.hitAngle );
-		
-		ctx.drawImage(
-				hit.good ? hitGreenImage : hitRedImage,
-				0,
-				-hitSize / 2,
-				hitLength,
-				hitSize
-		);
-		
-		ctx.restore();
-	}
-}
-
-
-Ball.prototype.updateMeteor = function() {
-    this.meteorAngle += this.angularVelocity * this.meteorSpeedFactor;
-}
-
-Ball.prototype.drawMeteor = function() {
-    var numMeteors = 5;
-		
-		var a = 2 - Math.abs(this.angularVelocity) / (minAngVel * 3);
-		ctx.globalAlpha = clip(a, 0 , 1);
-		
-		var im, sz;
-		if (Math.abs(this.angularVelocity) <= minAngVel) {
-			im = meteorGreenImage;
-			sz = 8;
-		} else {
-			return; // not currently using red meteors
-			im = meteorRedImage;
-			sz = 6;
-		}
-		
-    var angleInterval = 2 * Math.PI / numMeteors;
-    for (var i = 0; i < numMeteors; i++) {
-        var meteorAngle = this.meteorAngle + i * angleInterval;
-        var meteorX = this.radius*0.95 * Math.cos(meteorAngle);
-        var meteorY = this.radius*0.95 * Math.sin(meteorAngle);
-        ctx.drawImage(im, meteorX-sz/2, meteorY-sz/2, sz, sz);
-    }
-}
-
-
-Ball.prototype.updateMoveMeter = function() {
-	const moveMeterSpeed = 0.05;
-	var r = this.radius * 0.8;
-	var f = r / (this.sp() + 0.001);
-	this.moveMeter.goalx = this.vx * f;
-	this.moveMeter.goaly = this.vy * f;
-	this.moveMeter2.goalx = -this.vx * f;
-	this.moveMeter2.goaly = -this.vy * f;
-
-	this.moveMeter.x += (this.moveMeter.goalx - this.moveMeter.x) * moveMeterSpeed;
-	this.moveMeter.y += (this.moveMeter.goaly - this.moveMeter.y) * moveMeterSpeed;
-	this.moveMeter2.x += (this.moveMeter2.goalx - this.moveMeter2.x) * moveMeterSpeed;
-	this.moveMeter2.y += (this.moveMeter2.goaly - this.moveMeter2.y) * moveMeterSpeed;
-}
-
-Ball.prototype.drawMoveMeter = function() {
-	const moveMeterRad = 8;
-	ctx.save();
-	ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transformations
-	ctx.translate(this.x, this.y);
-	
-	// line between movemeters
-	var a = 0.8 - (this.sp() / minSpeed) * 0.08;
-	ctx.globalAlpha = clip(a, 0 , 1);
-	ctx.beginPath();
-	ctx.lineWidth = 2;
-	ctx.strokeStyle = "#886611";
-	ctx.moveTo(this.moveMeter.x, this.moveMeter.y);
-	ctx.lineTo(this.moveMeter2.x, this.moveMeter2.y);
-	ctx.stroke();
-	
-	ctx.drawImage( moveMeterImage,
-		this.moveMeter.x-moveMeterRad, this.moveMeter.y-moveMeterRad,
-		moveMeterRad * 2, moveMeterRad * 2);
-	var r = moveMeterRad * 0.7;
-	ctx.drawImage( moveMeterImage,
-		this.moveMeter2.x - r, this.moveMeter2.y - r,
-		r * 2, r * 2);
-	ctx.restore();
-}
-
-
+/* // not working
+Ball.prototype.updateHits = function() {
+	this.hits = this.hits.filter(function(hit) {
+			hit.time++;
+			return hit.time < this.hitDuration;
+	});
+}*/
 
 Ball.prototype.update = function() {
 	this.x += this.vx;
 	this.y += this.vy;
 	this.angle += this.angularVelocity;
-	
 	this.updateHits();
-	this.updateMeteor();
-	this.updateMoveMeter();
-	
-	
-	// walls coldet
 	
 	let edg = edge - 40;
 	if (this.x - this.radius < edg) {
@@ -438,40 +293,48 @@ Ball.prototype.update = function() {
 Ball.prototype.draw = function() {
 	ctx.save();
 	ctx.translate(this.x, this.y);
-	ctx.save();
 	ctx.rotate(this.angle);
 	ctx.drawImage(
 		ballImage,
 		-this.radius, -this.radius,
 		this.radius * 2, this.radius * 2
 	);
-
-	this.drawHits();
 	
-	ctx.restore();
-	
-	ctx.globalAlpha = 0.25;
-	ctx.drawImage(
-		speckMaskImage,
-		-this.radius, -this.radius,
-		this.radius * 2, this.radius * 2
-	);
-	
-	ctx.rotate(this.angle);
-	
-	this.drawMeteor();
-	this.drawMoveMeter();
+	// draw hits
+	for (var i = 0; i < this.hits.length; i++) {
+		var hit = this.hits[i];
+		var hitOpacity = 1 - hit.time / this.hitDuration;
+		ctx.save();
+		ctx.rotate(hit.angle);
+		ctx.globalAlpha = hitOpacity;
+		
+		 // draw line representing direction and amount of impact
+    var hitSize = this.radius / 4;
+    var hitLength = hit.j;
+    
+    ctx.translate(this.radius,
+                  -hitSize / 2);
+    
+    ctx.rotate(Math.PI - hit.hitAngle );
+    
+    ctx.drawImage(
+        hit.good ? hitGreenImage : hitRedImage,
+        0,
+        -hitSize / 2,
+        hitLength,
+        hitSize
+    );
+		
+		ctx.restore();
+	}
 	
 	ctx.restore();
 }
 
-
-// =========================================
-
 var balls = [];
 
 var totalSpeed = 0;
-//var totalAngVel = 0;
+var totalAngVel = 0;
 for (var i = 0; i < nBalls; i++) {
 	var x, y, distanceSquared;
 	do {
@@ -480,7 +343,7 @@ for (var i = 0; i < nBalls; i++) {
 			distanceSquared = (x - player.x) * (x - player.x) + (y - player.y) * (y - player.y);
 	} while (distanceSquared < 6400);
 
-	var speed = initBallSpeed + (Math.random() - 0.5) * initBallSpeed * 1.2;
+	var speed = initBallSpeed + (Math.random() - 0.5) * initBallSpeed * 0.5;
 	totalSpeed += speed;
 	var anv = initAngVel + (Math.random() - 0.5) * initAngVel * 0.5;
 	//totalAngVel += anv;
@@ -493,24 +356,11 @@ var avgSpeed = totalSpeed / nBalls;
 for (var i = 0; i < nBalls; i++) {
 		balls[i].speed += initBallSpeed - avgSpeed;
 }
-
-
-
-hits = [];
-const hitDuration = 150;
-
-addHit = function(x, y) {
-  hits.push({x: x, y: y, time: 0});
-}
-
-updateHits = function() {
-	for (var i = hits.length - 1; i >= 0; i--) {
-		hits[i].time++;
-		if (i == 0 && hits[i].time > hitDuration) {
-				hits.shift();
-		}
-	}
-}
+/*
+var avrAngVel = totalAngVel / nBalls;
+for (var i = 0; i < nBalls; i++) {
+		balls[i].angularVelocity += initBallSpeed - avgSpeed;
+}*/
 
 
 // =========================================================
@@ -528,19 +378,14 @@ function collidesWithBall(player) {
 					var normalX = dx / distance;
 					var normalY = dy / distance;
 					
-					// calculate tangential vector
-					var tangentX = -normalY;
-					var tangentY = normalX;
-
 					// calculate relative velocity
 					var rvx = ball.vx - player.vx;
 					var rvy = ball.vy - player.vy;
 					
-					
-					//calculate relative velocity with using angular velocities
+					// calculate relative velocity with using angular velocities
 					//var rvx = ball.vx - player.vx + ball.radius * ball.angularVelocity * normalY - player.radius * player.angularVelocity * normalY;
 					//var rvy = ball.vy - player.vy - ball.radius * ball.angularVelocity * normalX + player.radius * player.angularVelocity * normalX;
-					
+
 					// calculate relative velocity along normal
 					var velAlongNormal = rvx * normalX + rvy * normalY;
 
@@ -569,6 +414,10 @@ function collidesWithBall(player) {
 					var rvxTangent = rvx - velAlongNormal * normalX;
 					var rvyTangent = rvy - velAlongNormal * normalY;
 
+					// calculate tangential vector
+					var tangentX = -normalY;
+					var tangentY = normalX;
+
 					// calculate relative velocity along tangential vector
 					var velocityAlongTangent = rvxTangent * tangentX + rvyTangent * tangentY;
 
@@ -592,8 +441,7 @@ function collidesWithBall(player) {
 					
 					
 					if (velAlongNormal > 0.1) {
-						Score = Score + 1;
-						scoreElement.innerHTML = 'Bounces: ' + Score;
+						Score = Score - 1;
 						bounceBallSound.play();
 						var hitAngle = Math.atan2(dy, dx);
 						hitAngle -= ball.angle;
@@ -609,7 +457,6 @@ function collidesWithBall(player) {
 						var hitRotation = playerAngle - centerAngle;
 						var good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
 						ball.addHit(hitAngle, hitForce, hitRotation, good);
-						addHit(ball.x, ball.y);
 					}
 
 					return true;
@@ -618,88 +465,11 @@ function collidesWithBall(player) {
 	return false;
 }
 
-
-function resolveCollisions(b, ball) {
-var dx = b.x - ball.x;
-var dy = b.y - ball.y;
-var distance = Math.sqrt(dx * dx + dy * dy);
-
-if (distance > b.radius + ball.radius) { return false; }
-	
-// calculate normal
-var normalX = dx / distance;
-var normalY = dy / distance;
-
-// calculate relative velocity
-var rvx = ball.vx - b.vx;
-var rvy = ball.vy - b.vy;
-
-const tangentX = -normalY;
-const tangentY = normalX;
-
-// Calculate the relative velocity between the balls using linear and angular velocities
-/*var rvx = ball.vx - b.vx + (ball.radius * ball.angularVelocity * tangentY) - (b.radius * b.angularVelocity * tangentY);
-var rvy = ball.vy - b.vy - (ball.radius * ball.angularVelocity * tangentX) + (b.radius * b.angularVelocity * tangentX);*/
-
-// calculate relative velocity along normal
-var velAlongNormal = rvx * normalX + rvy * normalY;
-
-// do not resolve if velocities are separating
-if (velAlongNormal < 0) {
-		return;
-}
-
-// calculate impulse scalar
-var e = 1; // coefficient of restitution (1 for elastic collision)
-let j = -(1+e)*velAlongNormal;
-j /= 1/b.mass + 1/ball.mass;
-
-// apply impulse
-let impulseX = j*normalX;
-let impulseY = j*normalY;
-b.vx -= impulseX/b.mass;
-b.vy -= impulseY/b.mass;
-ball.vx += impulseX/ball.mass;
-ball.vy += impulseY/ball.mass;
-
-
-
-/*
-// calculate relative tangential velocity
-var rvxTangent = rvx - velAlongNormal * normalX;
-var rvyTangent = rvy - velAlongNormal * normalY;
-
-// calculate relative velocity along tangential vector
-var velocityAlongTangent = rvxTangent * tangentX + rvyTangent * tangentY;
-
-// calculate tangential impulse scalar
-var jt = -velocityAlongTangent;
-jt /= 1 / b.mass + 1 / ball.mass + (b.radius * b.radius) / b.momentOfInertia + (ball.radius * ball.radius) / ball.momentOfInertia;
-
-// apply friction // has wierd effect
-//var friction = 0.3; // coefficient of friction
-//jt = Math.max(-friction * j, Math.min(jt, friction * j));
-
-// apply tangential impulse
-var angularImpulseX = jt * tangentX;
-var angularImpulseY = jt * tangentY;
-b.vx -= angularImpulseX / b.mass;
-b.vy -= angularImpulseY / b.mass;
-b.angularVelocity += (b.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / b.momentOfInertia;
-ball.vx += angularImpulseX / ball.mass;
-ball.vy += angularImpulseY / ball.mass;
-ball.angularVelocity -= (ball.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / ball.momentOfInertia;
-*/
-
-return true;
-} // resolveCollisions(b, ball)
-
-
-
 function averageBallSpeed(){
 		var totalSpeed = 0;
 		balls.forEach(function(ball) {
-				totalSpeed += ball.sp();
+				var speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+				totalSpeed += speed;
 		});
 		return totalSpeed / balls.length;
 }
@@ -728,43 +498,31 @@ function Sound(filename) {
 
 
 
+
 var avrSpeed = 10, avrAngVel = 10;
 
-var tick = 0;
+var filterStrength = 20;
+var frameTime = 0, lastLoop = new Date(), thisLoop;
+
 function update() {
-	tick++;
-	
 	player.update();
-	
-	//remove calmed down balls
-	var ln = balls.length;
-	balls = balls.filter(function(b) {
-    return !(b.sp() < minSpeed && Math.abs(b.angularVelocity) < minAngVel);
-	});
-	if (balls.length < ln) {
-		ballDisappearSound.play();
-		edge += shrinkingPixPerBall;
-	}
-	if (balls.length == 0) {
-		gameOver = true;
-		gameOverSound.play();
-	}
 	
 	balls.forEach(function(ball) {
 			ball.update();
 	});
 	
-	updateHits();
-	
-	for (var i = 0; i < balls.length-1; i++) {
-		for (var u = i+1; u < balls.length; u++) {
-			resolveCollisions(balls[i], balls[u]);
-		}
-	}
+	scoreElement.innerHTML = 'Score: ' + Score;
 	
 	avrSpeed = averageBallSpeed();
 	avrAngVel = averageAngularVelocity();
 	
+	gameOver = (avrSpeed < minSpeed) && (avrAngVel < minAngVel);
+	if (gameOver) gameOverSound.play();
+	
+	// FPS
+	var thisFrameTime = (thisLoop=new Date()) - lastLoop;
+	frameTime += (thisFrameTime - frameTime) / filterStrength;
+	lastLoop = thisLoop;
 }
 
 
@@ -785,25 +543,13 @@ function draw() {
 	// Draw the background image
 	ctx.drawImage(backgroundImage, srcX, srcY, srcWidth, srcHeight, edge, edge, canvas.width-edge*2, canvas.height-edge*2);
 	
+	
 	// Draw inner border
 	ctx.beginPath();
 	ctx.strokeStyle = "#000033";
 	ctx.strokeRect(edge, edge, canvas.width - 2 * edge, canvas.height - 2 * edge);
 	let edg = edge - 40;
 	ctx.strokeRect(edg, edg, canvas.width - 2 * edg, canvas.height - 2 * edg);
-	
-	// Draw hits
-	
-	hits.forEach(function(hit) {
-		ctx.beginPath();
-		var hitOpacity = 1.5 - hit.time / hitDuration * 1.5;
-		ctx.globalAlpha = hitOpacity;
-		ctx.arc(hit.x, hit.y, ballRad, 0, Math.PI * 2);
-		ctx.lineWidth = 2;
-		ctx.strokeStyle = "#66ff66";
-		ctx.stroke();
-		ctx.globalAlpha = 1;
-	});
 
 	player.draw();
 	
@@ -811,48 +557,50 @@ function draw() {
 			ball.draw();
 	});
 	
+	// Average Velocity bar
+	ctxPrg.clearRect(0, 0, spCanvas.width, spCanvas.height);
+	var k = 0.5
+	scf = spCanvas.height / Math.pow(initBallSpeed - minSpeed, k);
+	var h = Math.pow(avrSpeed - minSpeed, k) * scf;
+	h = Math.min(h, spCanvas.height);
+	ctxPrg.beginPath();
+	ctxPrg.fillStyle = "#ff66ff";
+	ctxPrg.fillRect(0, spCanvas.height - h, spCanvas.width, spCanvas.height);
+	
+	// Average Angular Velocity bar
+	ctxAng.clearRect(0, 0, angCanvas.width, angCanvas.height);
+	var k2 = 0.5
+	scf2 = angCanvas.height / Math.pow(initAngVel*1.1 - minAngVel, k);
+	var h2 = Math.pow(avrAngVel - minAngVel, k2) * scf2;
+	h2 = Math.min(h2, angCanvas.height);
+	ctxAng.beginPath();
+	ctxAng.fillStyle = "#44ee44";
+	ctxAng.fillRect(0, angCanvas.height - h2, angCanvas.width, angCanvas.height);
 }
 
 
-const FPSfilterStrength = 20;
-var frameTime = 0, lastLoop = new Date(), thisLoop;
-function countFPS() {
-	var thisFrameTime = (thisLoop = new Date()) - lastLoop;
-	frameTime += (thisFrameTime - frameTime) / FPSfilterStrength;
-	lastLoop = thisLoop;
-}
-
-
-// ==============================================
-
-
-// Main Loop
 setInterval(function() {
-	if (gameOver || pause) return;
-	
-	update();
-	
-	if (fast) { // 3 times faster
+		if (gameOver || pause) return;
 		update();
-		update();
-	}
+		
+		if (fast) { // 3 times faster
+			update();
+			update();
+		}
 	
-	draw();
-	
-	edge += shrinkingRate; // db(edge);
+		draw();
+}, 15);
 
-	countFPS()
-}, 15); // 67fps
+setInterval(function() {
+		if (!pause) edge++;
+}, shrinkingRate*1000);
 
-
-// ===============================================
 
 
 document.onkeydown = document.onkeyup = function(e) {
 		keys[e.keyCode] = e.type == 'keydown';
-		//db(e.keyCode);
 		
-		// Pause on P or Escape
+		// Pause on P or Escape buttons
 		if (e.type == 'keydown' && (e.keyCode == 80 || e.keyCode == 27)) {
 			pause = pause ? false : true; 
     }
@@ -862,18 +610,11 @@ document.onkeydown = document.onkeyup = function(e) {
 			fast = e.type == 'keydown';
     }
 		
-		// fps on `
-		if (e.keyCode == 192 && e.type == 'keydown') {
-			showFPS = !showFPS;
-			if (!showFPS) fpsOut.innerHTML = '';
-    }
 };
 
 
 setInterval(function(){
-		if (showFPS) {
-			fpsOut.innerHTML = (1000/frameTime).toFixed(1) + " fps";
-		}
+		//fpsOut.innerHTML = (1000/frameTime).toFixed(1) + " fps";
 }, 1000);
 
 function db(v) {
