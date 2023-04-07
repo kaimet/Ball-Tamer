@@ -9,7 +9,7 @@
 <body style="background-image: url('img/bg.jpg')">
 
 <div id="container" style="display: flex; justify-content: center;">
-<canvas id="gameCanvas" width="880" height="520"></canvas>
+<canvas id="gameCanvas" width="550" height="550"></canvas>
 
 <canvas id="speedCanvas" width="20" height="550" style="border:2px solid #ff66ff; margin-left: 10px; margin-right: 20px;"></canvas>
 <canvas id="angCanvas" width="20" height="550" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
@@ -17,34 +17,31 @@
 </div>
 <div id="scoreContainer" style="display: flex; justify-content: center; font-size = '36px'"></div>
 
-<a href="ball_tamer4fa.html" style="font-size: 20px;">easier version</a>
+<a href="ball_tamer-mini3.html" style="font-size: 20px;">other version</a>
 
-
+<!-- <script src="howler.core.js"></script> -->
 <script>
 
 
 // ===================================================
 
 
-const playerRad = 12;
+const playerRad = 15;
 const playerMass = 1;
 const playerForce = 0.05;
 const traction = 0.992; // on free fly
 const tractionOnKeyDown = 0.97;
 
-const nBalls = 27;
-const ballRad = 32;
+const nBalls = 12;
+const ballRad = 40;
 const ballMass = 10;
 const initBallSpeed = 0.6;
 const minSpeed      = 0.07;
-const suf = 1; //without suf   1.00003; // speed-up factor
-const sud = 0.00002; // speed-up delta
-const suda = sud*0.03;
 const initAngVel = 0.025;
 const minAngVel  = 0.004;
 
-const shrinkingRate = 0.0015;
-const shrinkingPixPerBall = 10;
+const shrinkingRate = 0.0045;
+const shrinkingPixPerBall = 5;
 
 
 // ===================================================
@@ -187,13 +184,13 @@ Player.prototype.update = function() {
 			this.vx *= -1;
 			bounceWallSound.play();
 	}
-	if (this.y - this.radius < edge/2) {
-			let overlap = edge/2 + this.radius - this.y;
+	if (this.y - this.radius < edge) {
+			let overlap = edge + this.radius - this.y;
 			this.y += 2 * overlap;
 			this.vy *= -1;
 			bounceWallSound.play();
-	} else if (this.y + this.radius > canvas.height-edge/2) { 
-			let overlap = this.y + this.radius - canvas.height+edge/2;
+	} else if (this.y + this.radius > canvas.height-edge) { 
+			let overlap = this.y + this.radius - canvas.height+edge;
 			this.y -= 2 * overlap;
 			this.vy *= -1;
 			bounceWallSound.play();
@@ -404,17 +401,8 @@ Ball.prototype.drawMoveMeter = function() {
 
 
 Ball.prototype.update = function() {
-	this.vx *= suf
-	this.vy *= suf
-	var sp = this.sp()
-	this.vx += this.vx/sp * sud
-	this.vy += this.vy/sp * sud
-	
 	this.x += this.vx;
 	this.y += this.vy;
-	
-	this.angularVelocity *= suf
-	this.angularVelocity += suda * Math.sign(this.angularVelocity)
 	this.angle += this.angularVelocity;
 	
 	this.updateHits();
@@ -434,12 +422,12 @@ Ball.prototype.update = function() {
 			this.x -= 2 * overlap;
 			this.vx *= -1;
 	}
-	if (this.y - this.radius < edg/2) {
-			let overlap = edg/2 + this.radius - this.y;
+	if (this.y - this.radius < edg) {
+			let overlap = edg + this.radius - this.y;
 			this.y += 2 * overlap;
 			this.vy *= -1;
-	} else if (this.y + this.radius > canvas.height-edg/2) { 
-			let overlap = this.y + this.radius - canvas.height+edg/2;
+	} else if (this.y + this.radius > canvas.height-edg) { 
+			let overlap = this.y + this.radius - canvas.height+edg;
 			this.y -= 2 * overlap;
 			this.vy *= -1;
 	}
@@ -603,23 +591,9 @@ function collidesWithBall(player) {
 					ball.angularVelocity -= (ball.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / ball.momentOfInertia;
 					
 					
-					//if (velAlongNormal > 0) {
+					if (velAlongNormal > 0.1) {
 						Score = Score + 1;
 						scoreElement.innerHTML = 'Bounces: ' + Score;
-						addHit(ball.x, ball.y);
-						
-						if (ball.sp() < minSpeed && Math.abs(ball.angularVelocity) < minAngVel) {
-							balls.splice(i, 1);
-							ballDisappearSound.play();
-							edge += shrinkingPixPerBall;
-						
-							if (balls.length == 0) {
-								gameOver = true;
-								gameOverSound.play();
-							}
-							return;
-						}
-						
 						bounceBallSound.play();
 						var hitAngle = Math.atan2(dy, dx);
 						hitAngle -= ball.angle;
@@ -635,7 +609,8 @@ function collidesWithBall(player) {
 						var hitRotation = playerAngle - centerAngle;
 						var good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
 						ball.addHit(hitAngle, hitForce, hitRotation, good);
-					//}
+						addHit(ball.x, ball.y);
+					}
 
 					return true;
 			}
@@ -705,17 +680,15 @@ jt /= 1 / b.mass + 1 / ball.mass + (b.radius * b.radius) / b.momentOfInertia + (
 //var friction = 0.3; // coefficient of friction
 //jt = Math.max(-friction * j, Math.min(jt, friction * j));
 
-var f = 1.5 // compensate bug
-
 // apply tangential impulse
 var angularImpulseX = jt * tangentX;
 var angularImpulseY = jt * tangentY;
-b.vx -= angularImpulseX / b.mass * f;
-b.vy -= angularImpulseY / b.mass * f;
-b.angularVelocity += (b.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / b.momentOfInertia / f;
-ball.vx += angularImpulseX / ball.mass * f;
-ball.vy += angularImpulseY / ball.mass * f;
-ball.angularVelocity -= (ball.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / ball.momentOfInertia / f;
+b.vx -= angularImpulseX / b.mass;
+b.vy -= angularImpulseY / b.mass;
+b.angularVelocity += (b.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / b.momentOfInertia;
+ball.vx += angularImpulseX / ball.mass;
+ball.vy += angularImpulseY / ball.mass;
+ball.angularVelocity -= (ball.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / ball.momentOfInertia;
 */
 
 return true;
@@ -764,7 +737,7 @@ function update() {
 	player.update();
 	
 	//remove calmed down balls
-	/*var ln = balls.length;
+	var ln = balls.length;
 	balls = balls.filter(function(b) {
     return !(b.sp() < minSpeed && Math.abs(b.angularVelocity) < minAngVel);
 	});
@@ -775,7 +748,7 @@ function update() {
 	if (balls.length == 0) {
 		gameOver = true;
 		gameOverSound.play();
-	}*/
+	}
 	
 	balls.forEach(function(ball) {
 			ball.update();
@@ -798,26 +771,26 @@ function update() {
 
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.drawImage(edgeImage, edge-41, (edge-41)/2, canvas.width-(edge-41)*2, canvas.height-(edge-41));
+	ctx.drawImage(edgeImage, edge-41, edge-41, canvas.width-(edge-41)*2, canvas.height-(edge-41)*2);
 	//ctx.drawImage(backgroundImage, edge, edge, canvas.width-edge*2, canvas.height-edge*2);
 	
 	// Calculate the size of the source image to draw
 	let srcWidth = backgroundImage.width * (canvas.width - edge * 2) / canvas.width;
-	let srcHeight = backgroundImage.height * (canvas.height - edge) / canvas.height;
+	let srcHeight = backgroundImage.height * (canvas.height - edge * 2) / canvas.height;
 	
 	// Calculate the position of the source image to draw
 	let srcX = (backgroundImage.width - srcWidth) / 2;
 	let srcY = (backgroundImage.height - srcHeight) / 2;
 	
 	// Draw the background image
-	ctx.drawImage(backgroundImage, srcX, srcY, srcWidth, srcHeight, edge, edge/2, canvas.width-edge*2, canvas.height-edge);
+	ctx.drawImage(backgroundImage, srcX, srcY, srcWidth, srcHeight, edge, edge, canvas.width-edge*2, canvas.height-edge*2);
 	
 	// Draw inner border
 	ctx.beginPath();
 	ctx.strokeStyle = "#000033";
-	ctx.strokeRect(edge, edge/2, canvas.width - 2 * edge, canvas.height - edge);
+	ctx.strokeRect(edge, edge, canvas.width - 2 * edge, canvas.height - 2 * edge);
 	let edg = edge - 40;
-	ctx.strokeRect(edg, edg/2, canvas.width - 2 * edg, canvas.height - edg);
+	ctx.strokeRect(edg, edg, canvas.width - 2 * edg, canvas.height - 2 * edg);
 	
 	// Draw hits
 	
