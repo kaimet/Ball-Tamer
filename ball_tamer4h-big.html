@@ -9,7 +9,7 @@
 <body style="background-image: url('img/bg2.jpg')">
 
 <div id="container" style="display: flex; justify-content: center;">
-<canvas id="gameCanvas" width="430" height="330"></canvas>
+<canvas id="gameCanvas" width="880" height="520"></canvas>
 
 <canvas id="speedCanvas" width="20" height="550" style="border:2px solid #ff66ff; margin-left: 10px; margin-right: 20px;"></canvas>
 <canvas id="angCanvas" width="20" height="550" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
@@ -21,7 +21,7 @@
 <div id="scoreDisplay" style="font-family: monospace; font-size: 20px;"></div>
 </div>
 
-<a href="ball_tamer4h-big.html" style="font-size: 20px;">bigger version</a>
+<a href="ball_tamer-mini3.html" style="font-size: 20px;">other version</a>
 
 
 <script>
@@ -36,15 +36,15 @@ const playerForce = 0.05;
 const traction = 0.992; // on free fly
 const tractionOnKeyDown = 0.97;
 
-const nBalls = 7;
+const nBalls = 27;
 const ballRad = 32;
 const ballMass = 10;
-const initBallSpeed = 0.1;
+const initBallSpeed = 0.7;
 const minSpeed      = 0.07;
 const suf = 1; //without suf   1.00003; // speed-up factor
 const sud = 0.00002; // speed-up delta
 const suda = sud*0.03;
-const initAngVel = 0.01;
+const initAngVel = 0.025;
 const minAngVel  = 0.004;
 
 const shrinkingRate = 0.0015;
@@ -53,30 +53,29 @@ const shrinkingPixPerBall = 10;
 
 // ===================================================
 
-//localStorage.removeItem("btm_scores");
-//localStorage.removeItem("btm_finished");
+//localStorage.removeItem("bt_scores");
+//localStorage.removeItem("bt_finished");
 
-let maxScores = 12;
-let scores = JSON.parse(localStorage.getItem("btm_scores")) || [];
-let finished = JSON.parse(localStorage.getItem("btm_finished"));
+let maxScores = 18;
+let scores = JSON.parse(localStorage.getItem("bt_scores")) || [];
+let finished = JSON.parse(localStorage.getItem("bt_finished"));
 if (finished == -1) {
-	scores.push(99);
+	scores.push(333);
 	if (scores.length > maxScores) scores.shift();
-	localStorage.setItem("btm_scores", JSON.stringify(scores));
+	localStorage.setItem("bt_scores", JSON.stringify(scores));
 }
 
 if (scores.length > 0) displayScores();
 
 finished = -1;
-localStorage.setItem("btm_finished", JSON.stringify(finished));
+localStorage.setItem("bt_finished", JSON.stringify(finished));
 
 
 function displayScores() {
-  // Helper function to calculate the average of a slice of the scores array
-  const average = (arr) => arr.reduce((a, b) => a + b) / arr.length; // [[1]](https://stackoverflow.com/questions/29544371/finding-the-average-of-an-array-using-js)
+  const average = (arr) => arr.reduce((a, b) => a + b) / arr.length;
 
   // First line: all previous scores
-  const line1 ='\u00A0 \u00A0 \u00A0' + scores.join(' ');
+  const line1 ='\u00A0 \u00A0' + scores.join(' ');
 
   // Second line: average scores for every 3 consecutive games
   let line2 = 'average 3: ';
@@ -86,7 +85,7 @@ function displayScores() {
   }
 
   // Third line: average scores for every 5 consecutive games
-  let line3 = 'average 5: \u00A0 \u00A0 \u00A0 ';
+  let line3 = 'average 5: \u00A0 \u00A0 \u00A0 \u00A0 ';
   for (let i = 0; i < scores.length - 4; i++) {
     const avg = Math.round(average(scores.slice(i, i + 5)));
     line3 += `${avg} `;
@@ -110,7 +109,6 @@ document.getElementById('angCanvas').style.display = 'none';
 var scoreElement = document.createElement('div');
 scoreContainer.appendChild(scoreElement);
 scoreElement.style.fontSize = '32px';
-//scoreElement.style.marginLeft = '65px';
 
 var fpsOut = document.createElement('div');
 document.body.appendChild(fpsOut);
@@ -532,6 +530,8 @@ Ball.prototype.draw = function() {
 
 var balls = [];
 
+var totalSpeed = 0;
+//var totalAngVel = 0;
 for (var i = 0; i < nBalls; i++) {
 	var x, y, distanceSquared;
 	do {
@@ -540,10 +540,20 @@ for (var i = 0; i < nBalls; i++) {
 			distanceSquared = (x - player.x) * (x - player.x) + (y - player.y) * (y - player.y);
 	} while (distanceSquared < 6400);
 
-	var speed = (i+5) * initBallSpeed;
-	let anv = (i - nBalls/2 + 0.5) * initAngVel
-	balls.push(new Ball(x, y, speed, anv));
+	var speed = initBallSpeed + (Math.random() - 0.5) * initBallSpeed * 1.2;
+	totalSpeed += speed;
+	var anv = initAngVel + (Math.random() - 0.5) * initAngVel * 0.5;
+	//totalAngVel += anv;
+	let sign = Math.random() >= 0.5 ? -1 : 1;
+	balls.push(new Ball(x, y, speed, anv*sign));
 }
+
+// Adjust ball speeds so that their average equals initBallSpeed
+var avgSpeed = totalSpeed / nBalls;
+for (var i = 0; i < nBalls; i++) {
+		balls[i].speed += initBallSpeed - avgSpeed;
+}
+
 
 
 hits = [];
@@ -788,14 +798,15 @@ function Sound(filename) {
 		}
 }
 
+
 function endGame() {
 	gameOver = true;
 	gameOverSound.play();
 	
 	scores.push(Score);
 	if (scores.length > maxScores) scores.shift();
-	localStorage.setItem("btm_scores", JSON.stringify(scores));
-	localStorage.setItem("btm_finished", JSON.stringify(1));
+	localStorage.setItem("bt_scores", JSON.stringify(scores));
+	localStorage.setItem("bt_finished", JSON.stringify(1));
 	displayScores();
 }
 
