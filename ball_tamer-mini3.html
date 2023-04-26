@@ -10,21 +10,24 @@
 
 <div id="container" style="display: flex; justify-content: center;">
 <canvas id="gameCanvas" width="450" height="450"></canvas>
-<canvas id="speedCanvas" width="40" height="450" style="border:2px solid #ff66ff; margin-left: 20px; margin-right: 20px;"></canvas>
-<canvas id="angCanvas" width="40" height="450" style="border:2px solid #44ee44; margin-right: 20px;"></canvas>
+<canvas id="speedCanvas" width="25" height="450" style="border:2px solid #ff66ff; margin-left: 20px;"></canvas>
+<canvas id="angCanvas" width="25" height="450" style="border:2px solid #44ee44; margin-left: 20px;"></canvas>
 </div>
-<div id="scoreContainer" style="display: flex; justify-content: center; fontSize = '36px'"></div>
-<br><br>
-<a href="index.html" style="font-size: 20px;">newer version</a>
+<div id="scoreContainer" style="display: flex; justify-content: center;"></div>
+
+<div style="display: flex; justify-content: center;">
+<div id="scoreDisplay" style="font-family: monospace; font-size: 20px;"></div>
+</div>
+
+<a href="index.html" style="font-size: 20px;">new version</a>
 
 
 <!-- <script src="howler.core.js"></script> -->
 <script>
-//var scoreElement = document.getElementById('scoreContainer');
 
 var scoreElement = document.createElement('div');
 scoreContainer.appendChild(scoreElement);
-scoreElement.style.fontSize = '36px';
+scoreElement.style.fontSize = '32px';
 //scoreElement.style.marginLeft = '65px';
 
 var fpsOut = document.createElement('div');
@@ -44,8 +47,7 @@ var ctxPrg = spCanvas.getContext("2d");
 var ctxAng = angCanvas.getContext("2d");
 
 
-
-// ========================================================================
+// =============================================
 
 var playerRad = 15;
 var playerMass = 1;
@@ -56,12 +58,12 @@ var tractionOnKeyDown = 0.97;
 var nBalls = 5;
 var ballRad = 40;
 var ballMass = 7;
-var initBallSpeed = 2.3
+var initBallSpeed = 2.4
 //var initBallSpeed = 0.05
-var minSpeed      = 0.04;
+var minSpeed      = 0.02;
 var initAngVel = 0.015;
 //var initAngVel = 0;//0.00015;
-var minAngVel  = 0.0007;
+var minAngVel  = 0.0004;
 
 var Score = 125;
 var gameOver = false;
@@ -69,6 +71,54 @@ var fast = false;
 
 var edge = 41;
 var shrinkingRate = 3.3; //  sec / px
+
+
+// ===================================================
+
+//localStorage.removeItem("btm3_scores");
+//localStorage.removeItem("btm3_finished");
+
+let maxScores = 15;
+let scores = JSON.parse(localStorage.getItem("btm3_scores")) || [];
+let finished = JSON.parse(localStorage.getItem("btm3_finished"));
+if (finished == -1) {
+	scores.push(10);
+	if (scores.length > maxScores) scores.shift();
+	localStorage.setItem("btm3_scores", JSON.stringify(scores));
+}
+
+if (scores.length > 0) displayScores();
+
+finished = -1;
+localStorage.setItem("btm3_finished", JSON.stringify(finished));
+
+
+function displayScores() {
+  // Helper function to calculate the average of a slice of the scores array
+  const average = (arr) => arr.reduce((a, b) => a + b) / arr.length; // [[1]](https://stackoverflow.com/questions/29544371/finding-the-average-of-an-array-using-js)
+
+  // First line: all previous scores
+  const line1 ='\u00A0 \u00A0 \u00A0' + scores.join(' ');
+
+  // Second line: average scores for every 3 consecutive games
+  let line2 = 'average 3: ';
+	for (let i = 0; i < scores.length - 2; i++) {
+    const avg = Math.round(average(scores.slice(i, i + 3)));
+    line2 += `${avg} `;
+  }
+
+  // Third line: average scores for every 5 consecutive games
+  let line3 = 'average 5: \u00A0 \u00A0 \u00A0 ';
+  for (let i = 0; i < scores.length - 4; i++) {
+    const avg = Math.round(average(scores.slice(i, i + 5)));
+    line3 += `${avg} `;
+  }
+	
+  // Write the output to the div element
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  scoreDisplay.innerHTML = `${line1}<br>${line2}<br>${line3}`;
+}
+
 
 
 var ballImage = new Image();
@@ -440,7 +490,7 @@ function collidesWithBall(player) {
 					ball.angularVelocity -= (ball.radius * (angularImpulseX * normalY - angularImpulseY * normalX)) / ball.momentOfInertia;
 					
 					
-					if (velAlongNormal > 0.1) {
+					if (velAlongNormal > 0) {
 						Score = Score - 1;
 						bounceBallSound.play();
 						var hitAngle = Math.atan2(dy, dx);
@@ -517,7 +567,7 @@ function update() {
 	avrAngVel = averageAngularVelocity();
 	
 	gameOver = (avrSpeed < minSpeed) && (avrAngVel < minAngVel);
-	if (gameOver) gameOverSound.play();
+	if (gameOver) endGame();
 	
 	// FPS
 	var thisFrameTime = (thisLoop=new Date()) - lastLoop;
@@ -525,6 +575,16 @@ function update() {
 	lastLoop = thisLoop;
 }
 
+
+function endGame() {
+	gameOverSound.play();
+	
+	scores.push(Score);
+	if (scores.length > maxScores) scores.shift();
+	localStorage.setItem("btm3_scores", JSON.stringify(scores));
+	localStorage.setItem("btm3_finished", JSON.stringify(1));
+	displayScores();
+}
 
 
 function draw() {
@@ -583,7 +643,14 @@ setInterval(function() {
 		if (gameOver || pause) return;
 		update();
 		
-		if (fast) { // 3 times faster
+		if (fast) { // 10 times faster
+			update();
+			update();
+			update();
+			update();
+			update();
+			update();
+			update();
 			update();
 			update();
 		}
