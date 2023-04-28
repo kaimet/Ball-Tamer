@@ -72,29 +72,40 @@ localStorage.setItem("bt_finished", JSON.stringify(finished));
 
 
 function displayScores() {
+  // Helper function to calculate the average of a slice of the scores array
   const average = (arr) => arr.reduce((a, b) => a + b) / arr.length;
 
+  // calculate average scores for every n consecutive games and return a formatted string
+  const averageScoresLine = (n) => {
+    let line = '';
+    const averages = [];
+
+    for (let i = 0; i < scores.length - (n - 1); i++) {
+      const avg = Math.round(average(scores.slice(i, i + n)));
+      averages.push(avg);
+    }
+
+    const minScore = Math.min(...averages);
+    line += averages.map(avg => avg === minScore ? `<span style="color:blue;"><b>${avg}` + '</b></span>' : avg).join(' ');
+
+    return line;
+  };
+
   // First line: all previous scores
-  const line1 ='\u00A0 \u00A0' + scores.join(' ');
+  //const line1 ='\u00A0 \u00A0 \u00A0' + scores.join(' ');
+  const line1 ='\u00A0 \u00A0 \u00A0' + averageScoresLine(1);
 
   // Second line: average scores for every 3 consecutive games
-  let line2 = 'average 3: ';
-	for (let i = 0; i < scores.length - 2; i++) {
-    const avg = Math.round(average(scores.slice(i, i + 3)));
-    line2 += `${avg} `;
-  }
+  const line2 = 'average 3: ' + averageScoresLine(3);
 
   // Third line: average scores for every 5 consecutive games
-  let line3 = 'average 5: \u00A0 \u00A0 \u00A0 \u00A0 ';
-  for (let i = 0; i < scores.length - 4; i++) {
-    const avg = Math.round(average(scores.slice(i, i + 5)));
-    line3 += `${avg} `;
-  }
-	
+  const line3 = 'average 5: \u00A0 \u00A0 \u00A0 ' + averageScoresLine(5);
+
   // Write the output to the div element
   const scoreDisplay = document.getElementById('scoreDisplay');
   scoreDisplay.innerHTML = `${line1}<br>${line2}<br>${line3}`;
 }
+
 
 // ===================================================
 
@@ -122,6 +133,7 @@ var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = true;
 //ctx.imageSmoothingQuality = 'high';
+canvas.dispatchEvent(new MouseEvent('click'));
 var spCanvas = document.getElementById("speedCanvas");
 var ctxPrg = spCanvas.getContext("2d");
 var ctxAng = angCanvas.getContext("2d");
