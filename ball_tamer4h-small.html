@@ -59,7 +59,7 @@ let maxScores = 12;
 let scores = JSON.parse(localStorage.getItem("btm_scores")) || [];
 let finished = JSON.parse(localStorage.getItem("btm_finished"));
 if (finished == -1) {
-	scores.push(99);
+	scores.push(77);
 	if (scores.length > maxScores) scores.shift();
 	localStorage.setItem("btm_scores", JSON.stringify(scores));
 }
