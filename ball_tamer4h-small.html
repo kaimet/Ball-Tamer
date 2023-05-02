@@ -89,20 +89,33 @@ function displayScores() {
 
     return line;
   };
+	
+	/*const replaceCharFromEnd = (str, ch, ...positions) => {
+    let newStr = str.split('');
+    for (let n of positions) {
+			if (str.length >= n) {
+					newStr[newStr.length - n] = ch;
+			}
+    }
+    return newStr.join('');
+	}*/
 
   // First line: all previous scores
   //const line1 ='\u00A0 \u00A0 \u00A0' + scores.join(' ');
-  const line1 ='\u00A0 \u00A0 \u00A0' + averageScoresLine(1);
+  let line1 ='\u00A0 \u00A0 \u00A0' + averageScoresLine(1);
+	//line1 = replaceCharFromEnd(line1, '|', 9, 15); // won't work because of span tag inserted
 
   // Second line: average scores for every 3 consecutive games
   const line2 = 'average 3: ' + averageScoresLine(3);
 
   // Third line: average scores for every 5 consecutive games
   const line3 = 'average 5: \u00A0 \u00A0 \u00A0 ' + averageScoresLine(5);
+	
+	const line4 = 'average 10:' + '\u00A0 '.repeat(7*3) + averageScoresLine(10);
 
   // Write the output to the div element
   const scoreDisplay = document.getElementById('scoreDisplay');
-  scoreDisplay.innerHTML = `${line1}<br>${line2}<br>${line3}`;
+  scoreDisplay.innerHTML = `${line1}<br>${line2}<br>${line3}<br>${line4}`;
 }
 
 
