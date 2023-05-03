@@ -574,8 +574,8 @@ for (var i = 0; i < nBalls; i++) {
 hits = [];
 const hitDuration = 150;
 
-addHit = function(x, y) {
-  hits.push({x: x, y: y, time: 0});
+addHit = function(x, y, good) {
+  hits.push({x: x, y: y, time: 0, good: good});
 }
 
 updateHits = function() {
@@ -624,7 +624,7 @@ function collidesWithBall(player) {
 							continue;
 					}
 					
-					var spBeforeHit = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+					var spBeforeHit = ball.sp();
 					var avBeforeHit = ball.angularVelocity;
 					
 					// calculate impulse scalar
@@ -669,7 +669,8 @@ function collidesWithBall(player) {
 					//if (velAlongNormal > 0) {
 						Score = Score + 1;
 						scoreElement.innerHTML = 'Bounces: ' + Score;
-						addHit(ball.x, ball.y);
+						var good = ball.sp() - spBeforeHit <= 0;
+						addHit(ball.x, ball.y, good);
 						
 						if (ball.sp() < minSpeed && Math.abs(ball.angularVelocity) < minAngVel) {
 							balls.splice(i, 1);
@@ -693,7 +694,7 @@ function collidesWithBall(player) {
 						var playerAngle = Math.atan2(player.vy, player.vx);
 						var centerAngle = Math.atan2(-dy, -dx);
 						var hitRotation = playerAngle - centerAngle;
-						var good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
+						good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
 						ball.addHit(hitAngle, hitForce, hitRotation, good);
 					//}
 
@@ -897,7 +898,7 @@ function draw() {
 		ctx.globalAlpha = hitOpacity;
 		ctx.arc(hit.x, hit.y, ballRad, 0, Math.PI * 2);
 		ctx.lineWidth = 2;
-		ctx.strokeStyle = "#66ff66";
+		ctx.strokeStyle = hit.good ? "#66ff66" : "#ff4444";
 		ctx.stroke();
 		ctx.globalAlpha = 1;
 	});
