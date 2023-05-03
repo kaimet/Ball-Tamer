@@ -518,7 +518,7 @@ Ball.prototype.draw = function() {
 		this.radius * 2, this.radius * 2
 	);
 
-	this.drawHits();
+	//this.drawHits();
 	
 	ctx.restore();
 	
@@ -531,8 +531,8 @@ Ball.prototype.draw = function() {
 	
 	ctx.rotate(this.angle);
 	
-	this.drawMeteor();
-	this.drawMoveMeter();
+	//this.drawMeteor();
+	//this.drawMoveMeter();
 	
 	ctx.restore();
 }
@@ -569,16 +569,19 @@ for (var i = 0; i < nBalls; i++) {
 
 
 hits = [];
-const hitDuration = 150;
+const hitDuration = 300;
 
-addHit = function(x, y, good) {
-  hits.push({x: x, y: y, time: 0, good: good});
+addHit = function(x, y, good, goodang, av0, av) {
+  av = Math.sqrt(Math.abs(av)) * Math.sign(av) * 0.2
+	hits.push({x: x, y: y, time: 0, good: good, goodang: goodang, av0: av0, av: av, ang0: 0, ang: 0});
 }
 
 updateHits = function() {
 	for (var i = hits.length - 1; i >= 0; i--) {
 		hits[i].time++;
-		if (i == 0 && hits[i].time > hitDuration) {
+		hits[i].ang += hits[i].av;
+		
+		if (i == 0 && hits[i].time >= hitDuration) {
 				hits.shift();
 		}
 	}
@@ -691,8 +694,11 @@ function collidesWithBall(player) {
 						var playerAngle = Math.atan2(player.vy, player.vx);
 						var centerAngle = Math.atan2(-dy, -dx);
 						var hitRotation = playerAngle - centerAngle;
-						good = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
-						ball.addHit(hitAngle, hitForce, hitRotation, good);
+						var goodang = Math.abs(ball.angularVelocity) - Math.abs(avBeforeHit) <= 0;
+						ball.addHit(hitAngle, hitForce, hitRotation, goodang);
+						
+						var good = ball.sp() - spBeforeHit <= 0;
+						addHit(ball.x, ball.y, good, goodang, avBeforeHit, ball.angularVelocity);
 					//}
 
 					return true;
@@ -894,10 +900,18 @@ function draw() {
 		ctx.beginPath();
 		var hitOpacity = 1.5 - hit.time / hitDuration * 1.5;
 		ctx.globalAlpha = hitOpacity;
-		ctx.arc(hit.x, hit.y, ballRad, 0, Math.PI * 2);
+		ctx.arc(hit.x, hit.y, ballRad + 6, 0, Math.PI * 2);
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = hit.good ? "#66ff66" : "#ff4444";
 		ctx.stroke();
+		
+		var im = hit.goodang ? meteorGreenImage : meteorRedImage
+		let r = hit.goodang ? 6 : 6
+		for (let i = 0; i<10; i++) {
+			let a = i/5 * Math.PI;
+			ctx.drawImage(im, hit.x + Math.cos(hit.ang+a)*(ballRad-2) - 6, hit.y + Math.sin(hit.ang+a)*(ballRad-2) - r, r*2, r*2);
+		}
+		
 		ctx.globalAlpha = 1;
 	});
 
