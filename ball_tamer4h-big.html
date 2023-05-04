@@ -36,7 +36,7 @@ const playerForce = 0.05;
 const traction = 0.992; // on free fly
 const tractionOnKeyDown = 0.97;
 
-const nBalls = 27;
+const nBalls = 25;
 const ballRad = 32;
 const ballMass = 10;
 const initBallSpeed = 0.7;
@@ -47,7 +47,7 @@ const suda = sud*0.03;
 const initAngVel = 0.025;
 const minAngVel  = 0.004;
 
-const shrinkingRate = 0.0015;
+const shrinkingRate = 0.35;
 const shrinkingPixPerBall = 10;
 
 
@@ -956,7 +956,7 @@ setInterval(function() {
 	
 	draw();
 	
-	edge += shrinkingRate; // db(edge);
+	edge += shrinkingRate/(edge-20); // db(edge);
 
 	countFPS()
 }, 15); // 67fps
