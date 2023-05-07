@@ -899,7 +899,7 @@ function draw() {
 	hits.forEach(function(hit) {
 		ctx.beginPath();
 		var hitOpacity = 1.5 - hit.time / hitDuration * 1.5;
-		ctx.globalAlpha = hitOpacity;
+		ctx.globalAlpha = Math.max(Math.min(hitOpacity, 1), 0);
 		ctx.arc(hit.x, hit.y, ballRad + 6, 0, Math.PI * 2);
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = hit.good ? "#66ff66" : "#ff4444";
@@ -911,9 +911,8 @@ function draw() {
 			let a = i/5 * Math.PI;
 			ctx.drawImage(im, hit.x + Math.cos(hit.ang+a)*(ballRad-2) - 6, hit.y + Math.sin(hit.ang+a)*(ballRad-2) - r, r*2, r*2);
 		}
-		
-		ctx.globalAlpha = 1;
 	});
+	ctx.globalAlpha = 1;
 
 	player.draw();
 	
